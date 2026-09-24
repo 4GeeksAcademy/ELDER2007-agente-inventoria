@@ -1,0 +1,15 @@
+# Entorno
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Datos generados en tiempo de ejecución (se recrean solos al arrancar)
+data/products.csv
+data/conversation_log.csv
+
+# uv / editores
+.python-version
+.vscode/
+.idea/
