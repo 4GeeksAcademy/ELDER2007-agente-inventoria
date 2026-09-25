@@ -19,7 +19,12 @@ Con [uv](https://docs.astral.sh/uv/):
 uv add fastapi uvicorn openai python-dotenv
 ```
 
-(o, sin uv: `pip install -r requirements.txt`)
+(o, sin uv: `pip install -r requirements.txt`). Si clonás este repo, con `uv sync` se instala
+todo lo declarado en `pyproject.toml` y `uv.lock`. Ese comando `uv add` es el conjunto completo
+de dependencias del proyecto: el agente habla con la API usando solo la biblioteca estándar.
+
+Después ejecutá los comandos con `uv run` (por ejemplo `uv run uvicorn api.app:app --reload`), o
+activá el entorno con `source .venv/bin/activate`.
 
 Copiá `.env.example` a `.env` y completá tu clave de [Groq](https://console.groq.com/keys):
 
@@ -62,6 +67,31 @@ El agente se puede reiniciar en cualquier momento sin tocar la API: todo el inve
 historial de conversación quedan en los CSV de `data/`, así que no se pierde nada. Si necesitás
 reiniciar la API, el agente va a fallar en la próxima tool que intente usar hasta que la vuelvas
 a levantar — no hace falta reiniciar el agente también.
+
+## Tests
+
+Los tests usan CSV temporales y un LLM simulado: no gastan créditos ni tocan tus datos.
+
+```bash
+uv run pytest      # o, con el entorno activo: pip install pytest httpx jsonschema && pytest
+```
+
+Cubren los endpoints y sus errores (404, 409, 400, 422, 401), la búsqueda con erratas, el
+registro de solo adición, y el bucle del agente (varios pasos, corte por respuesta final, tope de
+iteraciones, API caída).
+
+## Proteger la API con una clave (opcional)
+
+Por defecto la API queda abierta, pensada para uso local. Si la exponés a internet (por ejemplo
+con el puerto público de Codespaces), definí en `.env`:
+
+```
+API_KEY=una_clave_larga_y_aleatoria
+```
+
+Entonces `/inventory` y `/products` exigen la cabecera `X-API-Key` (401 si falta o es incorrecta),
+y el agente la envía solo. `/health` y `/docs` siguen abiertos. Las dos terminales leen el mismo
+`.env`, así que basta con reiniciar la API y el agente.
 
 ## Cómo funciona el agente
 

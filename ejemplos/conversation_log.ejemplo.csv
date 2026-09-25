@@ -1,0 +1,50 @@
+actor,message,tool_call,timestamp
+user,llegaron 30 unidades de leche de avena,,2026-09-25T06:12:00.375416+00:00
+assistant,,"{""name"": ""buscar_producto"", ""arguments"": {""consulta"": ""leche de avena""}}",2026-09-25T06:12:00.891433+00:00
+tool,"{""resultados"": [{""id"": ""leche-de-avena"", ""name"": ""Leche de avena"", ""category"": ""Lácteos y alternativas"", ""quantity"": 18.0, ""unit"": ""litros"", ""min_stock"": 12.0, ""updated_at"": ""2026-09-25T06:12:00.919143+00:00""}]}",buscar_producto,2026-09-25T06:12:00.920126+00:00
+assistant,,"{""name"": ""ajustar_stock"", ""arguments"": {""delta"": 30, ""motivo"": ""llegada"", ""producto_id"": ""leche-de-avena""}}",2026-09-25T06:12:01.444617+00:00
+tool,"{""id"": ""leche-de-avena"", ""name"": ""Leche de avena"", ""category"": ""Lácteos y alternativas"", ""quantity"": 48.0, ""unit"": ""litros"", ""min_stock"": 12.0, ""updated_at"": ""2026-09-25T06:12:01.446409+00:00""}",ajustar_stock,2026-09-25T06:12:01.447282+00:00
+assistant,"¡Listo! Se sumaron 30 litros a **Leche de avena**. Ahora tenés **48 litros** en stock. Si necesitás algo más, avisame.",,2026-09-25T06:12:01.932192+00:00
+user,vendimos 12 bolsas de arábica,,2026-09-25T06:12:01.932391+00:00
+assistant,,"{""name"": ""buscar_producto"", ""arguments"": {""consulta"": ""árabica""}}",2026-09-25T06:12:02.441810+00:00
+tool,"{""resultados"": [{""id"": ""cafe-arabica"", ""name"": ""Café arábica"", ""category"": ""Café"", ""quantity"": 40.0, ""unit"": ""kg"", ""min_stock"": 10.0, ""updated_at"": ""2026-09-25T06:12:00.919105+00:00""}, {""id"": ""bolsas-de-arabica-1kg"", ""name"": ""Bolsas de arábica 1kg"", ""category"": ""Café"", ""quantity"": 14.0, ""unit"": ""bolsas"", ""min_stock"": 6.0, ""updated_at"": ""2026-09-25T06:12:00.919200+00:00""}]}",buscar_producto,2026-09-25T06:12:02.444094+00:00
+assistant,,"{""name"": ""ajustar_stock"", ""arguments"": {""delta"": -12, ""motivo"": ""venta"", ""producto_id"": ""bolsas-de-arabica-1kg""}}",2026-09-25T06:12:03.007180+00:00
+tool,"{""id"": ""bolsas-de-arabica-1kg"", ""name"": ""Bolsas de arábica 1kg"", ""category"": ""Café"", ""quantity"": 2.0, ""unit"": ""bolsas"", ""min_stock"": 6.0, ""updated_at"": ""2026-09-25T06:12:03.008918+00:00""}",ajustar_stock,2026-09-25T06:12:03.009875+00:00
+assistant,"Se restaron 12 bolsas de **Bolsas de arábica 1 kg**. Ahora quedan **2 bolsas** en stock, por debajo del umbral de **6**. Avisá si querés reponer o hacer algún otro ajuste.",,2026-09-25T06:12:12.652933+00:00
+user,¿qué productos están por agotarse?,,2026-09-25T06:12:12.653076+00:00
+assistant,,"{""name"": ""productos_bajo_stock"", ""arguments"": {}}",2026-09-25T06:12:29.324306+00:00
+tool,"{""productos_bajo_stock"": [{""id"": ""cacao-en-polvo"", ""name"": ""Cacao en polvo"", ""category"": ""Insumos"", ""quantity"": 6.0, ""unit"": ""kg"", ""min_stock"": 4.0, ""updated_at"": ""2026-09-25T06:12:00.919192+00:00""}, {""id"": ""bolsas-de-arabica-1kg"", ""name"": ""Bolsas de arábica 1kg"", ""category"": ""Café"", ""quantity"": 2.0, ""unit"": ""bolsas"", ""min_stock"": 6.0, ""updated_at"": ""2026-09-25T06:12:03.008918+00:00""}]}",productos_bajo_stock,2026-09-25T06:12:29.326801+00:00
+assistant,"Están por agotarse:
+
+- **Bolsas de arábica 1 kg** – 2 bolsas (umbral 6)  
+- **Cacao en polvo** – 6 kg (umbral 4)
+
+Decime si querés reabastecer alguno o hacer algún ajuste.",,2026-09-25T06:12:47.921732+00:00
+user,usamos 2.5 kg de cacao en polvo,,2026-09-25T06:12:47.921902+00:00
+assistant,,"{""name"": ""ajustar_stock"", ""arguments"": {""delta"": -2.5, ""motivo"": ""uso interno"", ""producto_id"": ""cacao-en-polvo""}}",2026-09-25T06:13:06.505545+00:00
+tool,"{""id"": ""cacao-en-polvo"", ""name"": ""Cacao en polvo"", ""category"": ""Insumos"", ""quantity"": 3.5, ""unit"": ""kg"", ""min_stock"": 4.0, ""updated_at"": ""2026-09-25T06:13:06.507238+00:00""}",ajustar_stock,2026-09-25T06:13:06.508255+00:00
+assistant,"Se restaron 2.5 kg de **Cacao en polvo**. Ahora tenés **3.5 kg**, que está por debajo del umbral de **4 kg**. Avisá si necesitás reponer o ajustar algo más.",,2026-09-25T06:13:11.188051+00:00
+user,llegaron 10 croissants,,2026-09-25T06:13:11.188197+00:00
+assistant,,"{""name"": ""buscar_producto"", ""arguments"": {""consulta"": ""croissants""}}",2026-09-25T06:13:54.034098+00:00
+tool,"{""resultados"": []}",buscar_producto,2026-09-25T06:13:54.036860+00:00
+assistant,"No tengo registrado ningún producto llamado **croissants**. ¿Querés darlo de alta ahora? Si es así, confírmame la unidad de medida (por ejemplo, “unidades”).",,2026-09-25T06:13:58.628971+00:00
+user,¿qué tiempo hace hoy?,,2026-09-25T06:13:58.629122+00:00
+assistant,No tengo acceso a información del clima. Sólo puedo ayudar con el inventario de la tienda. ¿Hay algo que necesites ajustar o consultar sobre productos?,,2026-09-25T06:14:00.102073+00:00
+user,"agrega té verde, 3 kg, y dime qué está por agotarse",,2026-09-25T06:14:00.102209+00:00
+assistant,,"{""name"": ""buscar_producto"", ""arguments"": {""consulta"": ""té verde""}}",2026-09-25T06:14:21.936660+00:00
+tool,"{""resultados"": []}",buscar_producto,2026-09-25T06:14:21.939014+00:00
+assistant,,"{""name"": ""crear_producto"", ""arguments"": {""cantidad"": 3, ""nombre"": ""Té verde"", ""unidad"": ""kg""}}",2026-09-25T06:14:42.860970+00:00
+tool,"{""id"": ""te-verde"", ""name"": ""Té verde"", ""category"": ""general"", ""quantity"": 3.0, ""unit"": ""kg"", ""min_stock"": 5.0, ""updated_at"": ""2026-09-25T06:14:42.862722+00:00""}",crear_producto,2026-09-25T06:14:42.863699+00:00
+assistant,,"{""name"": ""productos_bajo_stock"", ""arguments"": {}}",2026-09-25T06:15:04.356475+00:00
+tool,"{""productos_bajo_stock"": [{""id"": ""cacao-en-polvo"", ""name"": ""Cacao en polvo"", ""category"": ""Insumos"", ""quantity"": 3.5, ""unit"": ""kg"", ""min_stock"": 4.0, ""updated_at"": ""2026-09-25T06:13:06.507238+00:00""}, {""id"": ""bolsas-de-arabica-1kg"", ""name"": ""Bolsas de arábica 1kg"", ""category"": ""Café"", ""quantity"": 2.0, ""unit"": ""bolsas"", ""min_stock"": 6.0, ""updated_at"": ""2026-09-25T06:12:03.008918+00:00""}, {""id"": ""te-verde"", ""name"": ""Té verde"", ""category"": ""general"", ""quantity"": 3.0, ""unit"": ""kg"", ""min_stock"": 5.0, ""updated_at"": ""2026-09-25T06:14:42.862722+00:00""}]}",productos_bajo_stock,2026-09-25T06:15:04.358727+00:00
+assistant,"✅ Se creó **Té verde** con 3 kg (umbral 5 kg).
+
+Productos que están por debajo de su umbral:
+
+- **Cacao en polvo** – 3.5 kg (umbral 4 kg)  
+- **Bolsas de arábica 1 kg** – 2 bolsas (umbral 6)  
+- **Té verde** – 3 kg (umbral 5 kg)
+
+Decime si querés reponer alguno o hacer otro ajuste.",,2026-09-25T06:15:28.863991+00:00
+user,avísame cuando queden menos de 6 servilletas,,2026-09-25T06:15:28.864142+00:00
+assistant,"No tengo la capacidad de crear avisos automáticos. Pero podés volver a preguntar en cualquier momento y usaré `productos_bajo_stock` (con umbral 6) para decirte si las **servilletas** están por debajo de ese nivel. Si necesitás algo más ahora, avísame.",,2026-09-25T06:15:54.613995+00:00

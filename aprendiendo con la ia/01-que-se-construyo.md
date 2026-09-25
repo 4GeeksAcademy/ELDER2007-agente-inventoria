@@ -12,12 +12,15 @@ agente-inventoria/
 │   ├── app.py               Los endpoints de FastAPI y el manejo de errores HTTP
 │   ├── models.py            Modelos Pydantic: forma y validación de lo que entra y sale
 │   └── storage.py           Lectura/escritura de products.csv y excepciones de negocio
+├── tests/                   Tests automáticos con pytest (API, log y bucle del agente)
+├── ejemplos/                Un log real de una sesión, como muestra (el log de verdad está en .gitignore)
 ├── data/                    (se crea sola al ejecutar; está en .gitignore)
 │   ├── products.csv         El inventario (persistencia)
 │   └── conversation_log.csv El historial de eventos del agente
 ├── .env.example             Plantilla de configuración (el .env real NO se sube al repo)
 ├── .gitignore               Excluye .env, .venv y los CSV generados
-├── pyproject.toml           Dependencias para uv
+├── pyproject.toml           Dependencias para uv (y las de desarrollo: pytest)
+├── uv.lock                  Versiones exactas instaladas, para reproducir el entorno
 ├── requirements.txt         Las mismas dependencias, por si no hay uv
 └── README.md                Instalación y arranque
 ```
@@ -73,6 +76,7 @@ bolsas de arábica de 1 kg. Se genera solo la primera vez que arranca la API.
 | GET | `/products/search?q=...` | Buscar por nombre |
 | GET | `/products`, `/products/{id}`, `/products/low-stock` | Consultas adicionales |
 | POST | `/products`, PATCH `/products/{id}/quantity` | Equivalentes a los de `/inventory` |
-| GET | `/health` | Comprobar que la API está viva |
+| GET | `/health` | Comprobar que la API está viva (siempre abierto) |
+| GET | `/` | Redirige a `/docs` |
 
 Con la API arrancada, la documentación interactiva está en `http://localhost:8000/docs`.

@@ -67,6 +67,16 @@ Cada decisión sigue el mismo formato: **qué se eligió**, **qué alternativas 
   un producto mal elegido). Es mejor fallar de forma visible. El mensaje llega al LLM, que
   puede explicárselo al usuario.
 
+### A10. Clave de API opcional (`API_KEY`)
+- **Elegido:** si existe la variable `API_KEY`, `/inventory` y `/products` exigen la cabecera
+  `X-API-Key` (401 si falta o es incorrecta). Si no existe, la API queda abierta.
+- **Por qué opcional:** para uso local en una terminal, una clave solo estorba; pero en
+  Codespaces el puerto puede quedar accesible desde internet y ahí sí importa.
+- **Detalles:** `/health` y `/docs` quedan abiertos; la comparación usa `secrets.compare_digest`
+  para no filtrar información por el tiempo de respuesta; el agente añade la cabecera solo.
+- **Coste:** es una clave compartida, no usuarios con permisos. Suficiente aquí; no es un
+  sistema de autenticación completo.
+
 ### A9. Un manejador global para errores inesperados
 - **Por qué:** sin él, un fallo imprevisto devuelve texto plano. Con él, siempre es JSON con
   el formato `{"detail": "..."}`, igual que el resto de errores. No se expone el error
@@ -131,6 +141,23 @@ reiniciar, el LLM **no recuerda** la conversación anterior; solo queda el regis
 
 ---
 
+### B9. Las tools hablan con la API usando solo la biblioteca estándar (`urllib`)
+- **Elegido:** `urllib.request` en `agent_lib/tools.py`.
+- **Alternativas:** `requests`, `httpx`.
+- **Por qué:** la instalación que pediste (`uv add fastapi uvicorn openai python-dotenv`) no
+  incluye ninguna librería HTTP. Primero usé `requests`; probando en un proyecto vacío con ese
+  comando exacto, el agente **fallaba**. Cambié a `httpx` suponiendo que `openai` lo traía, y
+  volvió a fallar: `openai` 3.x ya no depende de `httpx`. La solución robusta fue no depender
+  de nada extra.
+- **Lección:** no supongas dependencias transitivas; compruébalas en un entorno limpio.
+- **Coste:** `urllib` es más verboso que `requests`. Para 5 tools sencillas es aceptable.
+
+### B10. El transporte HTTP es una función aparte (`_send`)
+- **Por qué:** en los tests se sustituye por una función que enruta al `TestClient` de FastAPI,
+  así se prueba el flujo agente → API completo sin abrir puertos ni usar la red.
+
+---
+
 ## C. El registro (`conversation_log.csv`)
 
 - **Columnas:** `actor, message, tool_call, timestamp`, en el orden pedido.
@@ -153,3 +180,20 @@ reiniciar, el LLM **no recuerda** la conversación anterior; solo queda el regis
   con el mismo nombre crearía ambigüedad al importar.
 - **`pyproject.toml` y `requirements.txt`:** el primero para `uv`, el segundo por si no lo
   tienes instalado (en el entorno donde se desarrolló no había `uv`).
+
+---
+
+## E. Tests automáticos
+
+- **Herramienta:** `pytest`, con `TestClient` de FastAPI para la API.
+- **Aislamiento:** cada test usa un CSV y un log temporales (fixture `autouse`), así que
+  nunca tocan `data/`.
+- **LLM simulado:** el bucle se prueba con un "LLM" que sigue un guion. Es gratis, rápido y
+  determinista, justo lo contrario del LLM real.
+- **Se comprobó que los tests detectan fallos:** se rompió el código a propósito (permitir
+  stock negativo, hacer que el log sobrescriba, impedir que el bucle termine) y en los tres
+  casos los tests fallaron. Un test que nunca falla no protege nada.
+- **Un fallo instructivo:** al principio unos tests pasaban "por la razón equivocada": la
+  tool fallaba con un error que el agente convertía en dato para el LLM, y el test solo miraba
+  el efecto lateral. Por eso ahora también comprueban que el resultado de cada tool no sea
+  un error.
