@@ -8,7 +8,7 @@ from typing import List
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from api import storage
 from api.models import Product, ProductCreate, QuantityAdjustment
@@ -35,6 +35,11 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     """Cualquier error no previsto responde con JSON consistente en vez de un 500 en texto plano."""
     logger.exception("Error no manejado en %s %s", request.method, request.url.path)
     return JSONResponse(status_code=500, content={"detail": "Error interno del servidor. Intentá de nuevo en un momento."})
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/health")

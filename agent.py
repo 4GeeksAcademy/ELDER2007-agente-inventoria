@@ -30,7 +30,7 @@ from agent_lib.tools import TOOL_IMPLEMENTATIONS, TOOL_SCHEMAS
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 MAX_TOOL_ITERATIONS = 8  # tope de vueltas pensar/actuar/actualizar por turno, evita loops infinitos
 
 SYSTEM_PROMPT = """Eres el asistente de inventario de una tienda. Hablás español, en tono \

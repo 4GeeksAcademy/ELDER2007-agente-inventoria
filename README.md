@@ -8,6 +8,9 @@ Sistema de inventario con dos partes que trabajan juntas:
   de avena", "vendimos 12 bolsas de arábica", "¿qué productos están por agotarse?"), decide qué
   endpoint de la API llamar, y responde como una conversación.
 
+> Para entender las decisiones de diseño, el bucle del agente y el glosario de términos,
+> mira la carpeta [aprendiendo con la ia/](aprendiendo%20con%20la%20ia/README.md).
+
 ## Instalación
 
 Con [uv](https://docs.astral.sh/uv/):
@@ -75,7 +78,7 @@ Por cada mensaje del usuario, el agente sigue este ciclo:
 
 Todo el historial vive en memoria durante la sesión, y cada evento (mensaje del usuario,
 llamada a herramienta, resultado, respuesta del agente) además se registra en
-`data/conversation_log.csv` con columnas `timestamp, actor, message, tool_call`. Ese archivo es
+`data/conversation_log.csv` con columnas `actor, message, tool_call, timestamp`. Ese archivo es
 **append-only**: nunca se sobrescribe, solo se agregan filas nuevas.
 
 ## API

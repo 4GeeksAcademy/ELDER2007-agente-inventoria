@@ -6,6 +6,7 @@ suficientemente rápido; un `Lock` evita condiciones de carrera entre
 requests concurrentes.
 """
 import csv
+import difflib
 import re
 import threading
 import unicodedata
@@ -132,10 +133,16 @@ def search(query: str) -> List[Product]:
             results.append(p)
     if not results:
         # fallback: coincidencia por palabras sueltas (p. ej. "arábica" -> "Café arábica")
-        needle_words = set(needle.split())
+        needle_words = {w for w in needle.split() if len(w) > 2}
         for p in list_products():
             haystack_words = set(normalize(p.name).split())
             if needle_words & haystack_words:
+                results.append(p)
+    if not results:
+        # último recurso: tolera erratas (p. ej. "árbica" -> "arábica")
+        for p in list_products():
+            haystack_words = normalize(p.name).split()
+            if any(difflib.get_close_matches(w, haystack_words, n=1, cutoff=0.75) for w in needle_words):
                 results.append(p)
     return results
 
