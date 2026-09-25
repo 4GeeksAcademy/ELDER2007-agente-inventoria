@@ -14,12 +14,13 @@ El LLM nunca toca el CSV directamente: siempre pasa por la API, que es la
 OpenAI/Groq, con tipos y restricciones explícitas para que el modelo no
 tenga que adivinar qué mandar.
 """
+import json
 import os
+import urllib.error
+import urllib.parse
+import urllib.request
 from typing import Optional
 
-import requests
-
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 TOOL_SCHEMAS = [
     {
@@ -160,15 +161,37 @@ TOOL_SCHEMAS = [
 ]
 
 
-def _request(method: str, path: str, **kwargs) -> dict:
-    response = requests.request(method, f"{API_BASE_URL}{path}", timeout=10, **kwargs)
-    if not response.ok:
+def _send(method: str, url: str, headers: dict, data: Optional[bytes]) -> tuple:
+    """Hace el pedido HTTP con la biblioteca estándar (sin depender de requests/httpx)."""
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            return response.status, response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode("utf-8")
+
+
+def _request(method: str, path: str, params: Optional[dict] = None, body: Optional[dict] = None) -> dict:
+    url = os.getenv("API_BASE_URL", "http://localhost:8000") + path
+    if params:
+        url += "?" + urllib.parse.urlencode(params)
+    headers = {"Accept": "application/json"}
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    api_key = os.getenv("API_KEY")
+    if api_key:
+        headers["X-API-Key"] = api_key
+
+    status, text = _send(method, url, headers, data)
+    if not 200 <= status < 300:
         try:
-            detail = response.json().get("detail", response.text)
-        except Exception:
-            detail = response.text
-        return {"error": True, "status_code": response.status_code, "detail": detail}
-    return response.json()
+            detail = json.loads(text).get("detail", text)
+        except ValueError:
+            detail = text
+        return {"error": True, "status_code": status, "detail": detail}
+    return json.loads(text)
 
 
 def listar_productos() -> dict:
@@ -196,11 +219,11 @@ def crear_producto(
         payload["category"] = categoria
     if stock_minimo is not None:
         payload["min_stock"] = stock_minimo
-    return _request("POST", "/inventory", json=payload)
+    return _request("POST", "/inventory", body=payload)
 
 
 def ajustar_stock(producto_id: str, delta: float, motivo: Optional[str] = None) -> dict:
-    return _request("PATCH", f"/inventory/{producto_id}", json={"delta": delta, "reason": motivo})
+    return _request("PATCH", f"/inventory/{producto_id}", body={"delta": delta, "reason": motivo})
 
 
 TOOL_IMPLEMENTATIONS = {

@@ -4,17 +4,35 @@ Arranque:
     uvicorn api.app:app --reload
 """
 import logging
-from typing import List
+import os
+import secrets
+from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from dotenv import load_dotenv
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.security import APIKeyHeader
 
 from api import storage
 from api.models import Product, ProductCreate, QuantityAdjustment
 from api.storage import InsufficientStockError, ProductAlreadyExistsError, ProductNotFoundError
 
+load_dotenv()
+
 logger = logging.getLogger("inventoria")
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verify_api_key(x_api_key: Optional[str] = Depends(api_key_header)) -> None:
+    """Si API_KEY está definida en el entorno, exige la cabecera X-API-Key. Si no, la API queda abierta."""
+    expected = os.getenv("API_KEY")
+    if expected and not (x_api_key and secrets.compare_digest(x_api_key, expected)):
+        raise HTTPException(status_code=401, detail="API key inválida o ausente. Envía la cabecera X-API-Key.")
+
+
+protected = APIRouter(dependencies=[Depends(verify_api_key)])
 
 app = FastAPI(
     title="Inventoria API",
@@ -47,13 +65,13 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/inventory", response_model=List[Product])
+@protected.get("/inventory", response_model=List[Product])
 def get_inventory():
     """Devuelve la lista completa de productos del inventario."""
     return storage.list_products()
 
 
-@app.post("/inventory", response_model=Product, status_code=201)
+@protected.post("/inventory", response_model=Product, status_code=201)
 def add_inventory_product(data: ProductCreate):
     """Añade un nuevo producto al inventario (name, quantity, unit)."""
     try:
@@ -62,13 +80,13 @@ def add_inventory_product(data: ProductCreate):
         raise HTTPException(status_code=409, detail=str(exc))
 
 
-@app.get("/inventory/alerts", response_model=List[Product])
+@protected.get("/inventory/alerts", response_model=List[Product])
 def inventory_alerts(threshold: float = Query(10, ge=0, description="Umbral de cantidad para la alerta")):
     """Productos cuya cantidad está por debajo del umbral dado (por defecto 10)."""
     return [p for p in storage.list_products() if p.quantity < threshold]
 
 
-@app.get("/products", response_model=List[Product])
+@protected.get("/products", response_model=List[Product])
 def list_products(low_stock: bool = Query(False, description="Filtrar solo productos con stock bajo")):
     products = storage.list_products()
     if low_stock:
@@ -76,18 +94,18 @@ def list_products(low_stock: bool = Query(False, description="Filtrar solo produ
     return products
 
 
-@app.get("/products/low-stock", response_model=List[Product])
+@protected.get("/products/low-stock", response_model=List[Product])
 def low_stock_products():
     """Productos que están por agotarse (cantidad <= umbral mínimo)."""
     return storage.get_low_stock()
 
 
-@app.get("/products/search", response_model=List[Product])
+@protected.get("/products/search", response_model=List[Product])
 def search_products(q: str = Query(..., min_length=1, description="Texto a buscar en el nombre del producto")):
     return storage.search(q)
 
 
-@app.get("/products/{product_id}", response_model=Product)
+@protected.get("/products/{product_id}", response_model=Product)
 def get_product(product_id: str):
     product = storage.get_by_id(product_id)
     if product is None:
@@ -95,7 +113,7 @@ def get_product(product_id: str):
     return product
 
 
-@app.post("/products", response_model=Product, status_code=201)
+@protected.post("/products", response_model=Product, status_code=201)
 def create_product(data: ProductCreate):
     try:
         return storage.create_product(data)
@@ -103,7 +121,7 @@ def create_product(data: ProductCreate):
         raise HTTPException(status_code=409, detail=str(exc))
 
 
-@app.patch("/products/{product_id}/quantity", response_model=Product)
+@protected.patch("/products/{product_id}/quantity", response_model=Product)
 def adjust_quantity(product_id: str, adjustment: QuantityAdjustment):
     try:
         return storage.adjust_quantity(product_id, adjustment.delta)
@@ -113,7 +131,7 @@ def adjust_quantity(product_id: str, adjustment: QuantityAdjustment):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@app.patch("/inventory/{product_id}", response_model=Product)
+@protected.patch("/inventory/{product_id}", response_model=Product)
 def adjust_inventory_stock(product_id: str, adjustment: QuantityAdjustment):
     """Actualiza el stock de un producto existente (delta positivo o negativo)."""
     try:
@@ -122,3 +140,6 @@ def adjust_inventory_stock(product_id: str, adjustment: QuantityAdjustment):
         raise HTTPException(status_code=404, detail=str(exc))
     except InsufficientStockError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+
+app.include_router(protected)
