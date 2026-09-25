@@ -22,7 +22,7 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import BadRequestError, OpenAI
 
 from agent_lib.logger import log_event
 from agent_lib.tools import TOOL_IMPLEMENTATIONS, TOOL_SCHEMAS
@@ -32,6 +32,7 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 MAX_TOOL_ITERATIONS = 8  # tope de vueltas pensar/actuar/actualizar por turno, evita loops infinitos
+MAX_REINTENTOS_LLM = 3  # el modelo a veces escribe mal el nombre de una tool y Groq responde 400
 
 SYSTEM_PROMPT = """Eres el asistente de inventario de una tienda. Hablás español, en tono \
 cercano y directo, como si le respondieras a la persona que administra el local.
@@ -58,6 +59,13 @@ inventado: explicale a la persona cuánto hay disponible y preguntá cómo segui
 - Respondé siempre de forma breve y conversacional, confirmando qué se actualizó (producto, \
 cantidad nueva, unidad) o la información pedida. Si un producto quedó en o por debajo de su \
 umbral mínimo después de un ajuste, avisalo.
+- Si dicen que "llegaron" o "vendieron" un producto que NO existe en el inventario, no lo \
+crees por tu cuenta: preguntá si quieren darlo de alta (con qué unidad) antes de hacerlo.
+- Solo podés gestionar este inventario con las herramientas que tenés. No podés cambiar la \
+categoría ni el stock mínimo de un producto ya creado, ni borrar productos, ni enviar avisos \
+o notificaciones por tu cuenta (solo informás cuando te preguntan). Si te piden algo así, o \
+algo ajeno al inventario (el clima, noticias), decí claramente que no podés; no lo prometas ni \
+ofrezcas hacerlo.
 """
 
 
@@ -88,13 +96,19 @@ def pensar(client: OpenAI, history: list):
     El LLM decide, en base a ese historial, si responde directamente o si pide
     ejecutar una o más tools antes de poder responder.
     """
-    response = client.chat.completions.create(
-        model=GROQ_MODEL,
-        messages=history,
-        tools=TOOL_SCHEMAS,
-        tool_choice="auto",
-    )
-    return response.choices[0].message
+    for intento in range(1, MAX_REINTENTOS_LLM + 1):
+        try:
+            response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=history,
+                tools=TOOL_SCHEMAS,
+                tool_choice="auto",
+            )
+            return response.choices[0].message
+        except BadRequestError as exc:
+            # Fallo puntual del modelo (tool inexistente/mal escrita): reintentar suele bastar.
+            if "tool call validation failed" not in str(exc).lower() or intento == MAX_REINTENTOS_LLM:
+                raise
 
 
 # --------------------------------------------------------------------------
